@@ -1,11 +1,12 @@
 package com.marcoslauder.trocademensagensbluetooth;
 
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -18,6 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.UUID;
+
 
 public class ConexaoActivity extends AppCompatActivity {
 
@@ -83,7 +85,7 @@ public class ConexaoActivity extends AppCompatActivity {
     private void enviarClick(){
         EditText etMensagem = (EditText) findViewById(R.id.etMensagem);
         String mensagem = etMensagem.getText().toString();
-        atualizaMensagens("Eu: ",mensagem);
+        atualizaMensagens("Eu",mensagem);
 
         byte[] send = mensagem.getBytes();
         connectedThread.write(send);
@@ -223,8 +225,7 @@ public class ConexaoActivity extends AppCompatActivity {
                     bytes = mmInStream.read(buffer);
                     // Send the obtained bytes to the UI activity
                     String readMessage = new String(buffer, 0,bytes);
-                    atualizaMensagens(this.getName(),readMessage);
-
+                    atualizaMensagens(mmSocket.getRemoteDevice().getName(),readMessage);
                 } catch (IOException e) {
                     break;
                 }
@@ -248,15 +249,26 @@ public class ConexaoActivity extends AppCompatActivity {
 
     private void manageConnectedSocket(BluetoothSocket socket) {
         this.name = socket.getRemoteDevice().getName();
-        txtConecatado.setText(this.name);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                txtConecatado.setText(name);
+            }
+        });
+
         connectedThread = new ConnectedThread(socket);
         connectedThread.start();
     }
 
     private void atualizaMensagens(String quem,String mensagem){
-        mArrayAdapter.add(quem+" "+mensagem);
-        mArrayAdapter.notifyDataSetChanged();
+        final String mensagemcompleta = quem+": "+mensagem;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mArrayAdapter.add(mensagemcompleta);
+                mArrayAdapter.notifyDataSetChanged();
+            }
+        });
+
     }
-
-
 }
